@@ -30,6 +30,21 @@ jobs:
         run: node tools/lint/source.mjs --self-test && node tools/lint/source.mjs && node tools/check-scripts.mjs
         background: true
 
+      - name: "outrun: install rustup and cmake"
+        # ARK-81 bench: outrun's images have no rustup and no cmake (GitHub's runner images do).
+        run: |
+          if ! command -v cmake >/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install --yes -qq cmake
+          fi
+          if ! command -v rustup >/dev/null; then
+            # 3 tries: static.rust-lang.org reset the connection once (as is 41928101037, Lint).
+            for t in 1 2 3; do
+              curl --proto '=https' --tlsv1.2 -sSf --retry 3 https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal && break
+              [ "$t" = 3 ] && exit 1; sleep 10
+            done
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - name: Clippy
@@ -44,6 +59,21 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+
+      - name: "outrun: install rustup and cmake"
+        # ARK-81 bench: outrun's images have no rustup and no cmake (GitHub's runner images do).
+        run: |
+          if ! command -v cmake >/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install --yes -qq cmake
+          fi
+          if ! command -v rustup >/dev/null; then
+            # 3 tries: static.rust-lang.org reset the connection once (as is 41928101037, Lint).
+            for t in 1 2 3; do
+              curl --proto '=https' --tlsv1.2 -sSf --retry 3 https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal && break
+              [ "$t" = 3 ] && exit 1; sleep 10
+            done
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
 
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
@@ -71,6 +101,21 @@ jobs:
       # Actions share GITHUB_EVENT_PATH, which the runner rewrites when a step starts.
       # Keep action steps sequential so readers cannot observe a truncated event payload.
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+
+      - name: "outrun: install rustup and cmake"
+        # ARK-81 bench: outrun's images have no rustup and no cmake (GitHub's runner images do).
+        run: |
+          if ! command -v cmake >/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install --yes -qq cmake
+          fi
+          if ! command -v rustup >/dev/null; then
+            # 3 tries: static.rust-lang.org reset the connection once (as is 41928101037, Lint).
+            for t in 1 2 3; do
+              curl --proto '=https' --tlsv1.2 -sSf --retry 3 https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal && break
+              [ "$t" = 3 ] && exit 1; sleep 10
+            done
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
 
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
@@ -183,6 +228,21 @@ jobs:
           go-version-file: ts-ref/tsc/go.mod
           cache-dependency-path: ts-ref/tsc/go.sum
 
+      - name: "outrun: install rustup and cmake"
+        # ARK-81 bench: outrun's images have no rustup and no cmake (GitHub's runner images do).
+        run: |
+          if ! command -v cmake >/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install --yes -qq cmake
+          fi
+          if ! command -v rustup >/dev/null; then
+            # 3 tries: static.rust-lang.org reset the connection once (as is 41928101037, Lint).
+            for t in 1 2 3; do
+              curl --proto '=https' --tlsv1.2 -sSf --retry 3 https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal && break
+              [ "$t" = 3 ] && exit 1; sleep 10
+            done
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - name: Set up pinned upstream client and Go oracle
@@ -240,6 +300,21 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       # As above, setup and checkout actions must not race on GITHUB_EVENT_PATH.
+      - name: "outrun: install rustup and cmake"
+        # ARK-81 bench: outrun's images have no rustup and no cmake (GitHub's runner images do).
+        run: |
+          if ! command -v cmake >/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install --yes -qq cmake
+          fi
+          if ! command -v rustup >/dev/null; then
+            # 3 tries: static.rust-lang.org reset the connection once (as is 41928101037, Lint).
+            for t in 1 2 3; do
+              curl --proto '=https' --tlsv1.2 -sSf --retry 3 https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal && break
+              [ "$t" = 3 ] && exit 1; sleep 10
+            done
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
@@ -296,6 +371,21 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       - uses: ./.github/actions/setup-node-tools
+
+      - name: "outrun: install rustup and cmake"
+        # ARK-81 bench: outrun's images have no rustup and no cmake (GitHub's runner images do).
+        run: |
+          if ! command -v cmake >/dev/null; then
+            sudo apt-get update -qq && sudo apt-get install --yes -qq cmake
+          fi
+          if ! command -v rustup >/dev/null; then
+            # 3 tries: static.rust-lang.org reset the connection once (as is 41928101037, Lint).
+            for t in 1 2 3; do
+              curl --proto '=https' --tlsv1.2 -sSf --retry 3 https://sh.rustup.rs | sh -s -- -y --default-toolchain none --profile minimal && break
+              [ "$t" = 3 ] && exit 1; sleep 10
+            done
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
 
       - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
         with:
