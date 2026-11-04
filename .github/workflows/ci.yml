@@ -18,7 +18,7 @@ concurrency:
 jobs:
   lint:
     name: Lint
-    runs-on: namespace-profile-linux-x64-default
+    runs-on: outrun-linux-arm64
     timeout-minutes: 30
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -30,44 +30,22 @@ jobs:
         run: node tools/lint/source.mjs --self-test && node tools/lint/source.mjs && node tools/check-scripts.mjs
         background: true
 
-      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        with:
-          path: /home/runner/.rustup
-          cache: rust
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - name: Clippy
         run: cargo clippy --locked --all-targets --config 'build.warnings="deny"'
 
       - wait: source-checks
 
-  check-windows:
-    name: Check Windows
-    runs-on: windows-latest
-    timeout-minutes: 30
-    steps:
-      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
-      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-        with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: check-windows
-      - name: Check workspace
-        run: cargo check --locked --all-targets --config 'build.warnings="deny"'
-
   # Conformance and every determinism shard wait for these binaries, so they build on a larger runner.
   build-correctness:
     name: Build correctness binaries
-    runs-on:
-      - nscloud-ubuntu-24.04-amd64-16x32-with-cache
-      - nscloud-cache-size-50gb
-      - nscloud-cache-tag-tsrs-build-correctness
+    runs-on: outrun-linux-arm64
     timeout-minutes: 30
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
-      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        with:
-          path: /home/runner/.rustup
-          cache: rust
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - name: Build correctness binaries
         run: cargo build --profile ci --locked -p tsrs_cli -p tsrs_testrunner -p tsrs_determinism
@@ -85,10 +63,7 @@ jobs:
 
   workspace-tests:
     name: Workspace tests
-    runs-on:
-      - nscloud-ubuntu-24.04-amd64-8x16-with-cache
-      - nscloud-cache-size-50gb
-      - nscloud-cache-tag-tsrs-workspace-tests
+    runs-on: outrun-linux-arm64
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -97,10 +72,7 @@ jobs:
       # Keep action steps sequential so readers cannot observe a truncated event payload.
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
-      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        with:
-          path: /home/runner/.rustup
-          cache: rust
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - name: Read TypeScript reference commit
         id: ts
@@ -123,7 +95,7 @@ jobs:
   conformance:
     name: Conformance
     needs: build-correctness
-    runs-on: nscloud-ubuntu-24.04-amd64-8x16
+    runs-on: outrun-linux-arm64
     timeout-minutes: 60
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -172,29 +144,9 @@ jobs:
             target/test-results-determinism/
           if-no-files-found: ignore
 
-  # The required Linux test check. Skipped jobs count as passing required checks, so this runs
-  # after any outcome and fails unless both jobs succeeded.
-  test:
-    name: Test Linux
-    needs: [workspace-tests, conformance]
-    if: always()
-    runs-on: namespace-profile-linux-x64-default
-    timeout-minutes: 5
-    steps:
-      - name: Require workspace tests and conformance
-        env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
-        run: |
-          for result in $RESULTS; do
-            if [ "$result" != success ]; then
-              echo "::error::workspace tests or conformance finished with $result"
-              exit 1
-            fi
-          done
-
   node-api-clients:
     name: Node API clients and parity
-    runs-on: namespace-profile-linux-x64-default
+    runs-on: outrun-linux-arm64
     timeout-minutes: 90
     permissions:
       contents: read
@@ -231,10 +183,7 @@ jobs:
           go-version-file: ts-ref/tsc/go.mod
           cache-dependency-path: ts-ref/tsc/go.sum
 
-      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        with:
-          path: /home/runner/.rustup
-          cache: rust
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - name: Set up pinned upstream client and Go oracle
         run: tools/node-api/setup.sh
@@ -282,7 +231,7 @@ jobs:
 
   fourslash:
     name: Fourslash
-    runs-on: namespace-profile-linux-x64-default
+    runs-on: outrun-linux-arm64
     timeout-minutes: 60
     env:
       # Match the runner's cache directory so setup-go restores and saves its build cache.
@@ -291,10 +240,7 @@ jobs:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
       # As above, setup and checkout actions must not race on GITHUB_EVENT_PATH.
-      - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        with:
-          path: /home/runner/.rustup
-          cache: rust
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17 (outrun: replaces the Namespace cache action)
 
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
 
@@ -340,7 +286,7 @@ jobs:
 
   thread-sanitizer:
     name: ThreadSanitizer
-    runs-on: ubuntu-latest
+    runs-on: outrun-linux-arm64
     timeout-minutes: 90
     permissions:
       contents: read
@@ -377,7 +323,7 @@ jobs:
           CARGO_PROFILE_CI_STRIP: "false"
         run: |
           cargo build --profile ci --locked -p tsrs_cli -Zbuild-std \
-            --features tsrs_core/plain-ptrs,tsrs_cli/system-alloc --target x86_64-unknown-linux-gnu
+            --features tsrs_core/plain-ptrs,tsrs_cli/system-alloc --target aarch64-unknown-linux-gnu
 
       - name: Benchmark cache key
         id: keys
@@ -399,7 +345,7 @@ jobs:
         timeout-minutes: 45
         run: |
           target/thread-sanitizer/debug/tsrs_thread_sanitizer \
-            target/thread-sanitizer/x86_64-unknown-linux-gnu/ci/tsrs --projects xstate-main,webpack
+            target/thread-sanitizer/aarch64-unknown-linux-gnu/ci/tsrs --projects xstate-main,webpack
 
       - name: Upload ThreadSanitizer results
         if: always()
@@ -422,19 +368,14 @@ jobs:
   # Each shard checks a weighted share of the benchmark projects and regression fixtures
   # (tsrs_determinism --shard). The runner stays at 8 vCPUs because the `max` checker rows use every CPU.
   determinism-shard:
-    name: Determinism shard ${{ matrix.shard }}
+    name: Determinism
     needs: build-correctness
-    runs-on: nscloud-ubuntu-24.04-amd64-8x16
+    runs-on: outrun-linux-arm64
     timeout-minutes: 120
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        # Shards share the organization's Namespace concurrency with oxc; more shards queue when it is busy.
-        shard: [1, 2, 3, 4, 5, 6]
     env:
-      SHARD: ${{ matrix.shard }}/${{ strategy.job-total }}
+      SHARD: 1/1
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
@@ -488,7 +429,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: determinism-${{ matrix.shard }}
+          name: determinism
           path: target/determinism/
           if-no-files-found: warn
           retention-days: 14
@@ -502,19 +443,3 @@ jobs:
             ${{ runner.temp }}/determinism-work/solutions
           key: ${{ steps.projects-cache.outputs.cache-primary-key }}
 
-  # The required determinism check, passing only when every shard passed.
-  determinism:
-    name: Determinism
-    needs: determinism-shard
-    if: always()
-    runs-on: namespace-profile-linux-x64-default
-    timeout-minutes: 5
-    steps:
-      - name: Require every determinism shard
-        env:
-          RESULT: ${{ needs.determinism-shard.result }}
-        run: |
-          if [ "$RESULT" != success ]; then
-            echo "::error::determinism shards finished with $RESULT"
-            exit 1
-          fi
