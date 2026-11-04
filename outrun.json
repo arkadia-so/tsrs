@@ -1,0 +1,16 @@
+{
+  "inputs": ["Cargo.lock", "Cargo.toml", "rust-toolchain.toml", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".node-version", ".github/actions/**", ".github/scripts/**", ".github/workflows/bench-engine.yml"],
+  "env": ["RUSTUP_TOOLCHAIN", "SHARD"],
+  "suites": [],
+  "trustedRef": "refs/heads/bench/engine",
+  "commands": [
+    { "name": "lint", "run": "source checks, cargo clippy --all-targets", "inputs": ["**/*", "!docs/**"] },
+    { "name": "build-correctness", "run": "cargo build --profile ci -p tsrs_cli -p tsrs_testrunner -p tsrs_determinism, uploaded as an artifact", "inputs": ["**/*"] },
+    { "name": "workspace-tests", "run": "cargo test --profile ci", "inputs": ["**/*", "!docs/**"] },
+    { "name": "conformance", "run": "tsrs_determinism conformance, tools/regressions.sh", "inputs": ["**/*", "!docs/**"] },
+    { "name": "node-api-clients", "run": "Node API client and parity suites (Go oracle and tsrs)", "inputs": ["**/*", "!docs/**"] },
+    { "name": "fourslash", "run": "Go Fourslash suite", "inputs": ["**/*", "!docs/**"] },
+    { "name": "thread-sanitizer", "run": "ThreadSanitizer gate (aarch64)", "inputs": ["**/*", "!docs/**"] },
+    { "name": "determinism", "run": "tsrs_determinism check and regressions, one shard (1/1)", "inputs": ["**/*", "!docs/**"] }
+  ]
+}
