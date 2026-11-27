@@ -1,0 +1,18 @@
+name: outrun e2e fork probe
+on:
+  pull_request:
+    branches: [outrun-fork-probe]
+  push:
+    branches: [outrun-fork-probe-push]
+permissions: {}
+jobs:
+  probe:
+    strategy:
+      fail-fast: false
+      matrix:
+        label: [outrun-ubuntu-24.04, outrun-linux-arm64, outrun-macos]
+    runs-on: ${{ matrix.label }}
+    timeout-minutes: 5
+    steps:
+      - name: E2E fork probe step
+        run: echo "E2E fork probe step ran on ${{ github.event_name }}"
